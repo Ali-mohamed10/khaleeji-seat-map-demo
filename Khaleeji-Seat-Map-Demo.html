@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Khaleeji Tour · Seat Selection Demo</title>
+<style>
+body{margin:0;background:#101827;color:#edf2fb;font:16px system-ui}
+main{max-width:720px;margin:auto;padding:32px 16px}
+.stage{text-align:center;background:#26364d;border-radius:12px;padding:14px;margin:20px 0}
+.map{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+button{font:inherit;color:inherit;background:#233751;border:1px solid #526881;border-radius:12px;padding:14px 6px;min-height:48px}
+button[aria-pressed=true]{background:#155c51;border-color:#7ce7ca}
+button:disabled{opacity:.55}
+button:focus-visible{outline:3px solid #ffd987;outline-offset:2px}
+footer{margin-top:24px;border-top:1px solid #526881;padding-top:16px}
+</style>
+<main>
+  <h1>Choose your tables</h1>
+  <p>Khaleeji Tour seat selection demo. All seating and prices are fictional.</p>
+  <div class="stage">Stage</div>
+  <section class="map" aria-label="Tables" id="map"></section>
+  <footer>
+    <p id="summary" role="status"></p>
+    <button id="clear" type="button">Clear selection</button>
+  </footer>
+</main>
+<script>
+const tables = [
+  { id: 'A1', seats: 4, price: 80 }, { id: 'A2', seats: 4, price: 80, sold: true },
+  { id: 'A3', seats: 4, price: 80 }, { id: 'B1', seats: 6, price: 100 },
+  { id: 'B2', seats: 6, price: 100 }, { id: 'B3', seats: 6, price: 100 },
+];
+const selected = new Set();
+const buttons = new Map();
+const amount = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' });
+const map = document.querySelector('#map');
+const summary = document.querySelector('#summary');
+const clear = document.querySelector('#clear');
+
+function updateSelection() {
+  const bookedTables = tables.filter(table => selected.has(table.id));
+  const seats = bookedTables.reduce((sum, table) => sum + table.seats, 0);
+  const total = bookedTables.reduce((sum, table) => sum + table.price, 0);
+  for (const table of tables) {
+    buttons.get(table.id).setAttribute('aria-pressed', String(selected.has(table.id)));
+  }
+  summary.textContent = bookedTables.length
+    ? `${bookedTables.map(table => table.id).join(', ')} · ${seats} seats · ${amount.format(total)} CAD`
+    : 'No tables selected.';
+}
+
+for (const table of tables) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.disabled = Boolean(table.sold);
+  button.textContent = table.sold
+    ? `${table.id} · Sold out`
+    : `${table.id} · ${table.seats} seats · ${amount.format(table.price)}`;
+  button.addEventListener('click', () => {
+    if (selected.has(table.id)) selected.delete(table.id);
+    else selected.add(table.id);
+    updateSelection();
+  });
+  buttons.set(table.id, button);
+  map.append(button);
+}
+clear.addEventListener('click', () => {
+  selected.clear();
+  updateSelection();
+});
+updateSelection();
+</script>
